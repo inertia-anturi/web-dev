@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+
+    <!-- jQuery UI tarvitsee omaa tyylitiedostoa -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/sunny/jquery-ui.css">
+
+    <!-- Varsinaiset jQuery-kirjastot -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+
+
+    <script>
+
+        haeAsty();
+
+
+        $(document).ready(function () {
+
+            $("#haeNappi").click(function () {
+                fetch();
+            });
+
+            //Tehtävä 42:
+            $("#lisaa_asiakas").click(function () {
+                $("#lisaa_form").dialog("open");
+                haeAstylisays();
+        
+            });
+
+            $("#lisaa_form").dialog({
+                
+                autoOpen: false,
+                modal: true,
+                buttons: {
+                    "Tallenna": function () {
+                        addUser();
+                        $("#lisaa_form").dialog("close");
+
+                    },
+                    "Peruuta": function () {
+                        $("#lisaa_form").dialog("close");
+                    }
+                }
+            });
+
+            function addUser() {
+                console.log("funktion kutsu");
+
+                var formData = {
+                    nimi: $("#nimi_lisays").val(),
+                    osoite: $("#osoite_lisays").val(),
+                    postinro: $("#postinro_lisays").val(),
+                    postitmp: $("#postitmp_lisays").val(),
+                    luontipvm: $("#luontipvm_lisays").val(),
+                    asty_avain: $("#asty_lisays").val(),
+                };
+                
+                $.ajax({
+                    //processData: false,
+                    //contentType: false,
+                    data: formData,
+                    dataType: 'json',
+                    //type: $(this).attr('method'),
+                    url: "https://codez.savonia.fi/jussi/api/asiakas/lisaa.php",
+                    method: 'post',
+                    encode: true,
+                    success: function (feedback) {
+                        console.log("ajax onnistui");
+                        fetch(); //Tehtävä 44
+                    }
+                });
+
+
+            }
+
+        }); //document ready -aaltosulkeet
+
+        function haeAsty() {
+            $.ajax(
+
+                {
+                    url: "https://codez.savonia.fi/jussi/api/asiakas/tyypit.php",
+                    method: 'get',
+                    success: function (data, status, jqXHR) {
+                        $("#asty").append('<option>' + " " + '</option>');
+                        $.each(data, function (index, element) {
+                            $("#asty").append('<option value=' + element.avain + '>' + element.selite + '</option>');
+                        });
+                    },
+
+                }
+            )
+        }
+
+        //Tehtävä 43:
+        function haeAstylisays () {
+            $.ajax(
+
+                {
+                    url: "https://codez.savonia.fi/jussi/api/asiakas/tyypit.php",
+                    method: 'get',
+                    success: function (data, status, jqXHR) {
+                        $("#asty_lisays").append('<option>' + " " + '</option>');
+                        $.each(data, function (index, element) {
+                            $("#asty_lisays").append('<option value=' + element.avain + '>' + element.selite + '</option>');
+                        });
+                    },
+
+                }
+            )
+        }
+
+        function haeData(urli) {
+
+            $.ajax(
+                {
+                    url: urli,
+                    method: 'get',
+                    success: function (data, status, jqXHR) {
+                        let taulu = data;
+                        $("#tbodyid").empty();
+                        for (let i = 0; i < taulu.length; i++) {
+                            tr = $('<tr/>');
+                            tr.append('<td>' + taulu[i].nimi + '</td>');
+                            tr.append('<td>' + taulu[i].osoite + '</td>');
+                            tr.append('<td>' + taulu[i].postinro + '</td>');
+                            tr.append('<td>' + taulu[i].postitmp + '</td>');
+                            tr.append('<td>' + taulu[i].luontipvm + '</td>');
+                            tr.append('<td>' + taulu[i].asty_avain + '</td>');
+                            $('#asiakkaat').append(tr);
+                            tr.append("<td><button id='poista_" + taulu[i].avain + "' onclick='poistaRivi(" + taulu[i].avain + ")'>Poista</button></td>");
+                            tr.append("<td><button id='muuta' value='" + taulu[i].avain + "' onclick='muutaRivi(" + taulu[i].avain + ")'>Muuta</button></td>");
+                        }
+                    }
+
+                }
+            )
+        }
+
+        //Tehtävä 41:
+        function poistaRivi(avain) {
+            let urli = 'https://codez.savonia.fi/jussi/api/asiakas/poista.php' + "?" + "avain=" + avain;
+            $.ajax(
+
+                {
+                    url: urli,
+                    method: 'get',
+                    success: function (data, status, jqXHR) {
+                        fetch();
+                    }
+
+                }
+            );
+        }
+
+        /*function muutaRivi(nro) {
+            let urli = 'https://codez.savonia.fi/jussi/api/asiakas/haku.php' + nro;
+            $.ajax(
+
+                {
+                    url: urli,
+                    method: 'put',
+                    success: function (data, status, jqXHR) {
+                        haeData('https://codez.savonia.fi/jussi/api/asiakas/haku.php');
+
+                    }
+
+                }
+            );
+        }*/
+
+        function fetch() {
+            let nimikentta = $("#nimi").val();
+            let osoitekentta = $("#osoite").val();
+            let avainkentta = $("#asty_avain").val();
+            let t = [];
+
+            let tt = "";
+
+            if (nimikentta.length > 0) {
+                t.push('nimi=' + nimikentta);
+            }
+            if (osoitekentta.length > 0) {
+                t.push('osoite=' + osoitekentta);
+            }
+            if (avainkentta == 0) {
+                tt = t.join("&");
+                console.log(tt);
+                let urli = 'https://codez.savonia.fi/jussi/api/asiakas/haku.php' + '?' + tt;
+                haeData(urli);
+                return tt;
+            }
+            else if (avainkentta > 0) {
+                t.push('asty_avain=' + avainkentta);
+            }
+
+            tt = t.join('&');
+            console.log("t" + t);
+            console.log(tt);
+
+            let urli = 'https://codez.savonia.fi/jussi/api/asiakas/haku.php' + '?' + tt;
+            console.log(urli);
+
+            haeData(urli);
+        }
+
+    </script>
+
+    <style>
+    </style>
+</head>
+
+<body onload="">
+    <label for="lomake">Hae hakuehdoilla:</label>
+    <form id="lomake">
+        <label for="nimi">Asiakkaan nimi</label>
+        <input type="text" id="nimi" /><br>
+        <label for="osoite">Asiakkaan osoite</label>
+        <input type="text" id="osoite" />
+    </form>
+
+    <label for="asty">Asiakastyyppi:</label>
+
+    <select id="asty">
+    </select>
+    <br>
+    <button id="haeNappi">Hae</button>
+    <button id="lisaa_asiakas">Lisää uusi asiakas</button>
+
+    <br>
+    <table id="asiakkaat">Asiakkaat:
+        <thead id="theaderit">
+            <tr>
+                <th>Nimi</th>
+                <th>Osoite</th>
+                <th>Postinro</th>
+                <th>Postitmp</th>
+                <th>Luontipvm</th>
+                <th>Asty_avain</th>
+            </tr>
+        </thead>
+        <tbody id="tbodyid">
+        </tbody>
+    </table>
+    <br>
+    <br>
+    <hr>
+
+
+
+    <form id="lisaa_form" method="post" enctype="multipart/form-data">
+        
+        <fieldset>
+            <label for="nimi_lisays">Nimi</label>
+            <input type="text" name="nimi_lisays" id="nimi_lisays">
+
+            <label for="osoite_lisays">Osoite</label>
+            <input type="text" name="osoite_lisays" id="osoite_lisays">
+
+            <label for="postinro_lisays">Postinumero</label>
+            <input type="text" name="postinro_lisays" id="postinro_lisays">
+
+            <label for="postitmp_lisays">Postitoimipaikka</label>
+            <input type="text" name="postitmp_lisays" id="postitmp_lisays">
+
+            <label for="luontipvm_lisays">Luontipäivämäärä</label>
+            <input type="text" name="luontipvm_lisays" id="luontipvm_lisays">
+
+            <label for="asty_lisays">Asiakastyyppi</label>
+            
+            <select id="asty_lisays">
+            </select>
+
+
+        </fieldset>
+    </form>
+
+
+</body>
+
+</html>
